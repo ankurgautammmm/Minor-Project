@@ -1,0 +1,629 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>BRAINBUZZ | Integrated (Login + Quiz)</title>
+
+  <!-- Tailwind (CDN) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lottie -->
+  <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet" />
+
+  <style>
+    :root { --panel: #0f1724; --muted: #9ca3af; }
+    html,body { height:100%; }
+    body {
+      /* Place images in same folder or change to a valid URL */
+      background: url("img3.jpg") center center/cover no-repeat fixed;
+      background-color:#000000;
+      font-family: 'Roboto', sans-serif;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      scroll-behavior: smooth;
+    }
+    .brand-font { font-family: 'Orbitron', sans-serif; letter-spacing: 1.5px; }
+    .btn-primary { background: #fff; color: #000; }
+    .card-bg { background: var(--panel); }
+    /* small fade-in for modal */
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px);} to { opacity: 1; transform: translateY(0);} }
+    .animate-fadeIn { animation: fadeIn .18s ease-out both; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- HEADER / NAV -->
+  <header class="bg-black py-4 px-6 flex justify-between items-center sticky top-0 z-50 border-b border-gray-800">
+    <div class="flex items-center space-x-3">
+      <img src="IMG1.jpg" alt="BRAINBUZZ Logo" id="logoImg" class="h-10 w-auto rounded-md object-cover bg-gray-800 cursor-pointer" />
+      <button id="logoBtn"><h1 class="text-2xl font-extrabold text-white brand-font">BRAINBUZZ</h1></button>
+    </div>
+
+    <nav id="mainNav" class="hidden md:flex items-center space-x-6 text-sm font-medium text-white">
+      <a href="#home" data-target="home" class="nav-link hover:text-gray-300">Home</a>
+      <a href="#features" data-target="features" class="nav-link hover:text-gray-300">Features</a>
+      <a href="#about" data-target="about" class="nav-link hover:text-gray-300">About</a>
+      <a href="#contact" data-target="contact" class="nav-link hover:text-gray-300">Contact</a>
+    </nav>
+
+    <div class="flex items-center space-x-3">
+      <button id="startBtnTop" class="px-4 py-2 rounded-full btn-primary font-semibold">Start Quiz</button>
+      <button id="navLoginBtn" class="px-3 py-2 rounded-full text-white border border-gray-700">Login</button>
+      <button id="navSignupBtn" class="px-3 py-2 rounded-full text-white border border-gray-700">Sign Up</button>
+      <button id="logoutBtn" class="hidden px-3 py-2 rounded-full text-white border border-red-600">Logout</button>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <main class="flex-grow">
+
+    <!-- HOME / HERO -->
+    <section id="home" class="px-6 py-16 md:py-24 max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-8">
+      <!-- Left side text (explicitly left on desktop) -->
+      <div class="md:w-1/2 text-left space-y-6">
+        <h2 class="text-3xl md:text-4xl font-extrabold brand-font">Generate & Play with <span class="text-gray-200">Live Questions!</span></h2>
+        <p class="text-gray-300 max-w-xl">
+          BRAINBUZZ fetches trivia questions from an online source and falls back to a local set when offline — quick, fun, and adaptive.
+        </p>
+        <div class="flex items-center gap-4">
+          <button id="startBtn" class="px-6 py-3 rounded-full btn-primary font-semibold">Start Quiz</button>
+          <button id="learnMore" class="px-4 py-3 rounded-full border border-gray-700 text-gray-200">Learn More</button>
+        </div>
+        <div class="mt-6 text-sm text-gray-400">
+          Tip: If questions fail to load due to network or API problems, Brainbuzz uses a reliable fallback set so you can keep playing.
+        </div>
+      </div>
+
+      <!-- Right side animation -->
+      <div class="flex-1 flex justify-center mt-8 md:mt-0">
+        <lottie-player src="https://assets8.lottiefiles.com/packages/lf20_jcikwtux.json" background="transparent" speed="1" style="width: 320px; height: 320px;" loop autoplay></lottie-player>
+      </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section id="features" class="px-6 py-16 max-w-6xl mx-auto"
+      style="background-image: url('img3.jpg'); background-size: cover; background-position: center;">
+      <h2 class="text-3xl font-bold mb-6 brand-font text-white">Features</h2>
+      <ul class="text-gray-200 list-disc list-inside max-w-2xl space-y-2">
+        <li>Fresh trivia questions every time.</li>
+        <li>Adaptive difficulty for personalized challenges.</li>
+        <li>Multiple subjects (General, Science, Maths, History).</li>
+        <li>Track performance with charts and stats.</li>
+      </ul>
+    </section>
+
+    <!-- ABOUT -->
+    <section id="about" class="px-6 py-16 max-w-6xl mx-auto bg-gray-900 rounded-xl mt-8">
+      <h2 class="text-3xl font-bold mb-6 brand-font text-white">About BRAINBUZZ</h2>
+      <p class="text-gray-300 max-w-2xl">
+        Brainbuzz is an interactive quiz platform designed to make learning fun and engaging. Play quizzes, track your performance,
+        and challenge yourself or friends in real-time.
+      </p>
+    </section>
+
+    <!-- CONTACT -->
+    <section id="contact" class="px-6 py-16 max-w-6xl mx-auto mt-8">
+      <h2 class="text-3xl font-bold mb-6 brand-font text-white">Contact</h2>
+      <p class="text-gray-300 max-w-2xl">
+        Questions or feedback? Email us at <a href="mailto:contact@brainbuzz.com" class="text-green-400 underline">contact@brainbuzz.com</a>.
+      </p>
+    </section>
+
+    <!-- LOGIN PAGE -->
+    <section id="loginPage" class="hidden min-h-[60vh] px-6 py-16 flex items-center justify-center">
+      <div class="w-full max-w-md bg-gray-900 p-6 rounded-xl">
+        <h3 class="text-xl font-bold mb-4 brand-font text-gray-300">Login to Brainbuzz</h3>
+
+        <form id="loginForm" class="space-y-4">
+          <div>
+            <label class="text-sm text-gray-300">Username</label>
+            <input id="username" required class="w-full mt-1 p-3 rounded-md bg-black border border-gray-700 text-white" placeholder="user" />
+          </div>
+          <div>
+            <label class="text-sm text-gray-300">Password</label>
+            <input id="password" type="password" required class="w-full mt-1 p-3 rounded-md bg-black border border-gray-700 text-white" placeholder="1234" />
+          </div>
+          <div id="loginError" class="text-sm text-red-400 hidden"></div>
+          <div class="flex items-center justify-between">
+            <button type="submit" class="px-4 py-2 rounded-full btn-primary font-semibold">Login</button>
+            <button type="button" id="backToHome" class="px-4 py-2 rounded-full border border-gray-700 text-gray-200">Back</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- SIGNUP -->
+    <section id="signupPage" class="hidden min-h-[60vh] px-6 py-16 flex items-center justify-center">
+      <div class="w-full max-w-md bg-gray-900 p-6 rounded-xl shadow-xl">
+        <h3 class="text-xl font-bold mb-4 brand-font text-gray-400">Sign Up for Brainbuzz</h3>
+        <form id="signupForm" class="space-y-4">
+          <div>
+            <label class="text-sm text-gray-300">Username</label>
+            <input id="signupUsername" required class="w-full mt-1 p-3 rounded-md bg-black border border-gray-700 text-white" placeholder="Choose a username" />
+          </div>
+          <div>
+            <label class="text-sm text-gray-300">Password</label>
+            <input id="signupPassword" type="password" required class="w-full mt-1 p-3 rounded-md bg-black border border-gray-700 text-white" placeholder="Password" />
+          </div>
+          <div>
+            <label class="text-sm text-gray-300">Confirm Password</label>
+            <input id="signupConfirmPassword" type="password" required class="w-full mt-1 p-3 rounded-md bg-black border border-gray-700 text-white" placeholder="Confirm Password" />
+          </div>
+          <div id="signupError" class="text-sm text-red-400 hidden"></div>
+          <div class="flex items-center justify-between">
+            <button type="submit" class="px-4 py-2 rounded-full btn-primary font-semibold">Sign Up</button>
+            <button type="button" id="backToLogin" class="px-4 py-2 rounded-full border border-gray-700 text-gray-200">Back to Login</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- DASHBOARD / SUBJECT CHOOSER -->
+    <section id="dashboard" class="hidden py-12 px-6">
+      <div class="max-w-4xl mx-auto text-center mb-8">
+        <h3 class="text-2xl font-bold brand-font">Choose Your Subject</h3>
+        <p class="text-gray-400 mt-2">Pick a subject and start a quick 5-question quiz.</p>
+      </div>
+      <div class="max-w-3xl mx-auto grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div onclick="startQuiz('General Knowledge')" class="p-6 rounded-xl bg-gray-800 cursor-pointer hover:bg-gray-700 text-white">General Knowledge →</div>
+        <div onclick="startQuiz('Science & Nature')" class="p-6 rounded-xl bg-gray-800 cursor-pointer hover:bg-gray-700 text-white">Science & Nature →</div>
+        <div onclick="startQuiz('Mathematics')" class="p-6 rounded-xl bg-gray-800 cursor-pointer hover:bg-gray-700 text-white">Mathematics →</div>
+        <div onclick="startQuiz('History')" class="p-6 rounded-xl bg-gray-800 cursor-pointer hover:bg-gray-700 text-white">History →</div>
+      </div>
+    </section>
+
+    <!-- QUIZ PAGE -->
+    <section id="quizPage" class="hidden px-6 py-12 min-h-[60vh] flex flex-col items-center">
+      <div class="max-w-2xl w-full bg-gray-900 p-6 rounded-xl">
+        <div class="flex justify-between items-start mb-4">
+          <h4 id="questionText" class="text-lg font-semibold text-white brand-font">Question will appear here</h4>
+          <div id="timerBox" class="text-sm text-gray-300">⏳ <span id="timer">15</span>s</div>
+        </div>
+
+        <div id="optionsContainer" class="space-y-3 mb-4"></div>
+
+        <div class="flex items-center justify-between">
+          <p id="resultText" class="text-gray-300 font-medium">✅ 0 Correct | ❌ 0 Incorrect</p>
+          <div class="space-x-2">
+            <button id="nextBtn" class="hidden px-4 py-2 rounded-full btn-primary font-semibold">Next →</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RESULT DASHBOARD -->
+    <section id="resultPage" class="hidden px-6 py-12 min-h-[60vh] flex flex-col items-center">
+      <div class="max-w-4xl w-full">
+        <h2 class="text-2xl font-bold mb-6 brand-font">📊 Your Performance Dashboard</h2>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+          <div class="bg-gray-800 p-4 rounded-xl text-center">
+            <div id="quizzesPlayed" class="text-3xl font-bold">0</div>
+            <div class="text-gray-400 text-sm mt-1">Quizzes Played</div>
+          </div>
+          <div class="bg-gray-800 p-4 rounded-xl text-center">
+            <div id="avgScore" class="text-3xl font-bold">0%</div>
+            <div class="text-gray-400 text-sm mt-1">Average Score</div>
+          </div>
+          <div class="bg-gray-800 p-4 rounded-xl text-center">
+            <div id="completionRate" class="text-3xl font-bold">0%</div>
+            <div class="text-gray-400 text-sm mt-1">Completion Rate</div>
+          </div>
+          <div class="bg-gray-800 p-4 rounded-xl text-center">
+            <div id="currentStreak" class="text-3xl font-bold">0</div>
+            <div class="text-gray-400 text-sm mt-1">Current Streak</div>
+          </div>
+        </div>
+
+        <div class="bg-gray-900 p-4 rounded-xl">
+          <h3 class="text-sm text-gray-300 mb-3 brand-font">Performance Over Time</h3>
+          <canvas id="performanceChart" height="100"></canvas>
+        </div>
+
+        <div class="mt-6 flex justify-center gap-3">
+          <button id="restartBtn" class="px-5 py-3 rounded-full btn-primary font-semibold">Back to Dashboard</button>
+          <button id="clearStats" class="px-5 py-3 rounded-full border border-gray-700 text-gray-200">Clear Stats</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="border-t border-gray-700 py-6 text-center text-sm text-gray-400 bg-black relative">
+    <div class="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-4">
+      <button onclick="openPrivacyPolicy()" class="text-red-500 font-semibold hover:underline focus:outline-none">Privacy Policy</button>
+      <span class="text-gray-500">|</span>
+      <span class="text-gray-400">© 2025 Brainbuzz Media Ltd. All rights reserved.</span>
+    </div>
+  </footer>
+
+  <!-- PRIVACY POLICY MODAL -->
+  <div id="privacyModal" class="fixed inset-0 bg-black bg-opacity-80 hidden items-center justify-center z-50">
+    <div class="bg-gray-900 rounded-2xl p-8 max-w-2xl mx-4 text-left shadow-2xl animate-fadeIn">
+      <h2 class="text-3xl font-bold text-red-500 mb-4 brand-font">Privacy Policy</h2>
+      <p class="text-gray-300 leading-relaxed mb-6">
+        Your privacy is important to us. Brainbuzz does not store any personal information beyond your local login and quiz performance.
+        We never share or sell your data to third parties. All activity data remains on your device.
+      </p>
+      <p class="text-gray-400 mb-6">
+        By using Brainbuzz, you agree to allow us to collect minimal anonymous statistics to improve user experience.
+      </p>
+      <div class="flex justify-end">
+        <button onclick="closePrivacyPolicy()" class="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg font-semibold">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCRIPT -->
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // Pages used by router
+    const pages = ['home','features','about','contact','loginPage','signupPage','dashboard','quizPage','resultPage'];
+
+    // Helpers
+    function hideAllPages() {
+      pages.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add('hidden');
+      });
+    }
+    function routeTo(id) {
+      hideAllPages();
+      const el = document.getElementById(id);
+      if (el) el.classList.remove('hidden');
+      syncHeader();
+      try { window.location.hash = id; } catch (e) {}
+    }
+
+    // Elements
+    const navLoginBtn = document.getElementById('navLoginBtn');
+    const navSignupBtn = document.getElementById('navSignupBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const startBtnTop = document.getElementById('startBtnTop');
+    const startBtn = document.getElementById('startBtn');
+    const learnMore = document.getElementById('learnMore');
+    const logoBtn = document.getElementById('logoBtn');
+    const logoImg = document.getElementById('logoImg');
+
+    // Basic routing from header
+    logoBtn.addEventListener('click', () => routeTo('home'));
+    logoImg.addEventListener('click', () => routeTo('home'));
+    learnMore.addEventListener('click', () => routeTo('features'));
+    navLoginBtn.addEventListener('click', () => routeTo('loginPage'));
+    navSignupBtn.addEventListener('click', () => routeTo('signupPage'));
+    startBtnTop.addEventListener('click', () => { if (isLoggedIn()) routeTo('dashboard'); else routeTo('loginPage'); });
+    startBtn.addEventListener('click', () => { if (isLoggedIn()) routeTo('dashboard'); else routeTo('loginPage'); });
+
+    // LocalStorage keys
+    const LS = {
+      loggedIn: 'bb_loggedIn',
+      username: 'bb_username',
+      quizzesPlayed: 'bb_quizzesPlayed',
+      totalScore: 'bb_totalScore',
+      scoreHistory: 'bb_scoreHistory',
+      currentStreak: 'bb_currentStreak'
+    };
+
+    // Single isLoggedIn
+    function isLoggedIn() { return localStorage.getItem(LS.loggedIn) === 'true'; }
+
+    // Initialize stats if not present
+    function initializeStatsIfNeeded() {
+      if (localStorage.getItem(LS.quizzesPlayed) === null) localStorage.setItem(LS.quizzesPlayed, '0');
+      if (localStorage.getItem(LS.totalScore) === null) localStorage.setItem(LS.totalScore, '0');
+      if (localStorage.getItem(LS.scoreHistory) === null) localStorage.setItem(LS.scoreHistory, JSON.stringify([]));
+      if (localStorage.getItem(LS.currentStreak) === null) localStorage.setItem(LS.currentStreak, '0');
+      updateStatsUI();
+    }
+
+    function getQuizzesPlayed(){ return Number(localStorage.getItem(LS.quizzesPlayed) || 0); }
+    function getTotalScore(){ return Number(localStorage.getItem(LS.totalScore) || 0); }
+    function getScoreHistory(){ return JSON.parse(localStorage.getItem(LS.scoreHistory) || '[]'); }
+    function getCurrentStreak(){ return Number(localStorage.getItem(LS.currentStreak) || 0); }
+
+    function updateStatsUI(){
+      const qp = document.getElementById('quizzesPlayed');
+      const avg = document.getElementById('avgScore');
+      const cr = document.getElementById('completionRate');
+      const cs = document.getElementById('currentStreak');
+
+      qp.innerText = getQuizzesPlayed();
+      const average = getQuizzesPlayed() === 0 ? 0 : (getTotalScore() / getQuizzesPlayed());
+      avg.innerText = average.toFixed(1) + '%';
+      const lastScore = getScoreHistory().length ? getScoreHistory()[getScoreHistory().length - 1] : 0;
+      cr.innerText = (lastScore).toFixed(1) + '%';
+      cs.innerText = getCurrentStreak() > 0 ? getCurrentStreak() : '0';
+    }
+
+    // Sync header visibility
+    const mainNav = document.getElementById('mainNav');
+    function syncHeader(){
+      if (isLoggedIn()) {
+        navLoginBtn.classList.add('hidden');
+        navSignupBtn.classList.add('hidden');
+        logoutBtn.classList.remove('hidden');
+      } else {
+        navLoginBtn.classList.remove('hidden');
+        navSignupBtn.classList.remove('hidden');
+        logoutBtn.classList.add('hidden');
+      }
+      mainNav.classList.remove('hidden');
+    }
+
+    // LOGIN / SIGNUP forms
+    const loginForm = document.getElementById('loginForm');
+    const loginError = document.getElementById('loginError');
+    loginForm?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const u = document.getElementById('username').value.trim();
+      const p = document.getElementById('password').value;
+      const stored = localStorage.getItem(`bb_user_${u}`);
+      if (stored && stored === p) {
+        localStorage.setItem(LS.loggedIn, 'true');
+        localStorage.setItem(LS.username, u);
+        loginError.classList.add('hidden');
+        syncHeader();
+        routeTo('dashboard');
+      } else {
+        loginError.innerText = 'Invalid credentials';
+        loginError.classList.remove('hidden');
+      }
+    });
+
+    const signupForm = document.getElementById('signupForm');
+    const signupError = document.getElementById('signupError');
+    signupForm?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const u = document.getElementById('signupUsername').value.trim();
+      const p = document.getElementById('signupPassword').value;
+      const cp = document.getElementById('signupConfirmPassword').value;
+      if (!u || !p || !cp) { signupError.innerText = "All fields required"; signupError.classList.remove('hidden'); return; }
+      if (p !== cp) { signupError.innerText = "Passwords do not match"; signupError.classList.remove('hidden'); return; }
+      if (localStorage.getItem(`bb_user_${u}`)) { signupError.innerText = "Username exists"; signupError.classList.remove('hidden'); return; }
+      localStorage.setItem(`bb_user_${u}`, p);
+      alert("Signup successful!");
+      signupForm.reset();
+      signupError.classList.add('hidden');
+      routeTo('loginPage');
+    });
+
+    document.getElementById('backToHome')?.addEventListener('click', () => routeTo('home'));
+    document.getElementById('backToLogin')?.addEventListener('click', () => routeTo('loginPage'));
+    document.getElementById('restartBtn')?.addEventListener('click', () => routeTo('dashboard'));
+
+    logoutBtn?.addEventListener('click', () => {
+      localStorage.setItem(LS.loggedIn, 'false');
+      localStorage.removeItem(LS.username);
+      syncHeader();
+      routeTo('home');
+    });
+
+    // Clear stats
+    document.getElementById('clearStats')?.addEventListener('click', () => {
+      if (!confirm('Clear all saved stats?')) return;
+      localStorage.setItem(LS.quizzesPlayed, '0');
+      localStorage.setItem(LS.totalScore, '0');
+      localStorage.setItem(LS.scoreHistory, JSON.stringify([]));
+      localStorage.setItem(LS.currentStreak, '0');
+      updateStatsUI();
+      if (performanceChart) { performanceChart.destroy(); performanceChart = null; }
+      alert('Stats cleared.');
+    });
+
+    // --- Quiz state & functions ---
+    const categoryMap = {
+      "General Knowledge": 9,
+      "Science & Nature": 17,
+      "Mathematics": 19,
+      "History": 23
+    };
+
+    // fallback local questions
+    const fallbackQuestions = [
+      { question: "Two angles are complementary if their sum is:", options: ["90°","120°","180°","45°"], correct: "90°" },
+      { question: "Which planet is known as the Red Planet?", options: ["Earth","Mars","Venus","Jupiter"], correct: "Mars" },
+      { question: "What is 5 × 6?", options: ["11","30","56","15"], correct: "30" },
+      { question: "Who discovered gravity?", options: ["Newton","Einstein","Edison","Galileo"], correct: "Newton" },
+      { question: "What is H2O commonly called?", options: ["Hydrogen","Oxygen","Water","Salt"], correct: "Water" }
+    ];
+
+    // DOM elements for quiz
+    const questionText = document.getElementById('questionText');
+    const optionsContainer = document.getElementById('optionsContainer');
+    const timerEl = document.getElementById('timer');
+    const resultText = document.getElementById('resultText');
+    const nextBtn = document.getElementById('nextBtn');
+
+    // stats & runtime state
+    let currentQuiz = [], currentQuestion = 0, score = 0, incorrect = 0, timer = null, timeLeft = 15;
+    let performanceChart = null;
+
+    // helpers
+    function decodeHTML(html) {
+      const txt = document.createElement('textarea');
+      txt.innerHTML = html;
+      return txt.value;
+    }
+    function shuffleArray(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    // start quiz (called by dashboard cards)
+    window.startQuiz = function(subject) {
+      routeTo('quizPage');
+      generateQuestions(subject);
+    };
+
+    async function generateQuestions(subject) {
+      const category = categoryMap[subject] || 9;
+      try {
+        const res = await fetch(`https://opentdb.com/api.php?amount=5&category=${category}&type=multiple`);
+        const data = await res.json();
+        if (!data || data.response_code !== 0 || !Array.isArray(data.results) || data.results.length === 0) throw new Error('No questions');
+        currentQuiz = data.results.map(q => {
+          const incs = q.incorrect_answers.map(a => decodeHTML(a));
+          const correct = decodeHTML(q.correct_answer);
+          const options = shuffleArray([...incs, correct]);
+          return { question: decodeHTML(q.question), options, correct };
+        });
+      } catch (err) {
+        console.warn('OpenTDB failed, using fallback', err);
+        currentQuiz = JSON.parse(JSON.stringify(fallbackQuestions));
+        currentQuiz.forEach(q => q.options = shuffleArray(q.options));
+      }
+      currentQuestion = 0; score = 0; incorrect = 0;
+      loadQuestion();
+    }
+
+    function loadQuestion() {
+      clearInterval(timer);
+      timeLeft = 30;
+      timerEl.innerText = timeLeft;
+      const q = currentQuiz[currentQuestion];
+      if (!q) { showResults(); return; }
+
+      questionText.innerText = q.question;
+      optionsContainer.innerHTML = '';
+      q.options.forEach(opt => {
+        const div = document.createElement('div');
+        div.className = 'p-3 rounded-lg bg-gray-800 hover:bg-gray-700 cursor-pointer text-white';
+        div.innerText = opt;
+        div.addEventListener('click', () => selectOption(div, opt));
+        optionsContainer.appendChild(div);
+      });
+
+      resultText.innerText = `✅ ${score} Correct | ❌ ${incorrect} Incorrect`;
+      nextBtn.classList.add('hidden');
+
+      timer = setInterval(() => {
+        timeLeft--;
+        timerEl.innerText = Math.max(timeLeft, 0);
+        if (timeLeft <= 0) {
+          clearInterval(timer);
+          Array.from(document.querySelectorAll('#optionsContainer > div')).forEach(d => d.style.pointerEvents = 'none');
+          incorrect++;
+          resultText.innerText = `✅ ${score} Correct | ❌ ${incorrect} Incorrect`;
+          const correct = currentQuiz[currentQuestion].correct;
+          Array.from(document.querySelectorAll('#optionsContainer > div')).forEach(d => {
+            if (d.innerText === correct) d.classList.add('ring-2', 'ring-green-400');
+          });
+          nextBtn.classList.remove('hidden');
+        }
+      }, 1000);
+    }
+
+    function selectOption(div, selected) {
+      clearInterval(timer);
+      Array.from(document.querySelectorAll('#optionsContainer > div')).forEach(d => d.style.pointerEvents = 'none');
+      const correct = currentQuiz[currentQuestion].correct;
+      if (selected === correct) {
+        div.classList.add('bg-green-600');
+        score++;
+        const newStreak = getCurrentStreak() + 1;
+        localStorage.setItem(LS.currentStreak, String(newStreak));
+      } else {
+        div.classList.add('bg-red-600');
+        incorrect++;
+        localStorage.setItem(LS.currentStreak, '0');
+        Array.from(document.querySelectorAll('#optionsContainer > div')).forEach(d => {
+          if (d.innerText === correct) d.classList.add('ring-2', 'ring-green-400');
+        });
+      }
+      resultText.innerText = `✅ ${score} Correct | ❌ ${incorrect} Incorrect`;
+      nextBtn.classList.remove('hidden');
+    }
+
+    nextBtn.addEventListener('click', () => {
+      currentQuestion++;
+      if (currentQuestion < currentQuiz.length) loadQuestion();
+      else showResults();
+    });
+
+    function showResults() {
+      clearInterval(timer);
+      const quizzes = getQuizzesPlayed() + 1;
+      const pct = Math.round((score / currentQuiz.length) * 100);
+      const total = getTotalScore() + pct;
+      const history = getScoreHistory();
+      history.push(pct);
+
+      localStorage.setItem(LS.quizzesPlayed, String(quizzes));
+      localStorage.setItem(LS.totalScore, String(total));
+      localStorage.setItem(LS.scoreHistory, JSON.stringify(history));
+
+      updateStatsUI();
+      routeTo('resultPage');
+      renderChart();
+    }
+
+    function renderChart() {
+      const ctx = document.getElementById('performanceChart').getContext('2d');
+      const data = getScoreHistory();
+      if (performanceChart) performanceChart.destroy();
+      performanceChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: data.map((_, i) => `Quiz ${i + 1}`),
+          datasets: [{
+            label: 'Score (%)',
+            data,
+            tension: 0.4,
+            fill: true,
+            backgroundColor: 'rgba(74, 222, 128, 0.12)',
+            borderColor: '#4ADE80',
+            pointRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: { beginAtZero: true, max: 100, ticks: { color: '#9ca3af' }, grid: { color: '#1f2937' } },
+            x: { ticks: { color: '#9ca3af' }, grid: { color: '#1f2937' } }
+          },
+          plugins: { legend: { display: false } }
+        }
+      });
+    }
+
+    // Privacy modal
+    window.openPrivacyPolicy = function() {
+      document.getElementById('privacyModal').classList.remove('hidden');
+      document.getElementById('privacyModal').classList.add('flex');
+    };
+    window.closePrivacyPolicy = function() {
+      document.getElementById('privacyModal').classList.add('hidden');
+      document.getElementById('privacyModal').classList.remove('flex');
+    };
+
+    // Handle back/forward using hash
+    window.addEventListener('hashchange', () => {
+      const hash = window.location.hash.replace('#','');
+      if (pages.includes(hash)) routeTo(hash);
+    });
+
+    // storage sync (multiple tabs)
+    window.addEventListener('storage', () => syncHeader());
+
+    // Init
+    (function initApp(){
+      initializeStatsIfNeeded();
+      syncHeader();
+      const logged = isLoggedIn();
+      if (logged) routeTo('dashboard'); else routeTo('home');
+    })();
+
+  }); // DOMContentLoaded end
+  </script>
+
+</body>
+</html>
