@@ -1,0 +1,557 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>BRAINBUZZ — Final SPA (Lottie swap)</title>
+
+  <!-- Tailwind (CDN) for utilities -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Lottie player -->
+  <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet" />
+
+  <style>
+    :root{
+      --neon1:#38bdf8; /* electric blue */
+      --neon2:#ec4899; /* magenta */
+      --accent: linear-gradient(90deg,var(--neon1),var(--neon2));
+      --muted:#9ca3af;
+    }
+    html,body{height:100%;margin:0;background:#000;color:#fff;font-family:Roboto,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased;}
+    .brand-font{ font-family:'Orbitron',sans-serif; letter-spacing:1px; }
+
+    /* Background video + canvas fallback */
+    #bgVideo{ position:fixed; inset:0; width:100%; height:100%; object-fit:cover; z-index:-2; filter:brightness(.6) saturate(.9); }
+    #starfieldCanvas{ position:fixed; inset:0; width:100%; height:100%; z-index:-3; }
+    .nebula-overlay{ position:fixed; inset:0; z-index:-1; pointer-events:none;
+      background:
+        radial-gradient(800px 280px at 10% 20%, rgba(56,189,248,0.03), transparent 8%),
+        radial-gradient(700px 260px at 85% 75%, rgba(236,72,153,0.02), transparent 8%); mix-blend-mode:screen; }
+
+    /* Header */
+    header{ position:sticky; top:0; z-index:60; backdrop-filter:blur(10px); background:linear-gradient(180deg, rgba(0,0,0,0.65), rgba(0,0,0,0.35)); border-bottom:1px solid rgba(255,255,255,0.03); }
+    .nav-left, .nav-center, .nav-right{ display:flex; align-items:center; gap:10px; }
+    .nav-center{ justify-content:center; }
+    .nav-box{ padding:8px 12px; border-radius:10px; background:linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.00)); border:1px solid rgba(255,255,255,0.04); font-weight:600; cursor:pointer; transition:all .18s ease; }
+    .nav-box:hover{ transform:translateY(-3px); border-color:rgba(255,255,255,0.08); }
+    .nav-box.active{ box-shadow:0 18px 40px rgba(56,189,248,0.06); border-color:rgba(56,189,248,0.12); }
+
+    /* ink underline */
+    .nav-ink{ position:relative; padding-bottom:6px; display:inline-block; }
+    .nav-ink::after{ content:''; position:absolute; left:8%; right:8%; bottom:0; height:3px; transform:scaleX(0); transform-origin:left; border-radius:3px; background:var(--accent); transition:transform .28s cubic-bezier(.2,.9,.25,1); }
+    .nav-ink:hover::after, .nav-ink.active::after{ transform:scaleX(1); }
+
+    /* glow border wrapper */
+    .glow-border{ position:relative; border-radius:12px; padding:.25rem; }
+    .glow-border::before{ content:''; position:absolute; inset:-1px; border-radius:14px; background:linear-gradient(90deg, rgba(56,189,248,0.12), rgba(236,72,153,0.10)); filter:blur(10px); opacity:0; transition:opacity .35s; z-index:-1; pointer-events:none; }
+    .glow-border:hover::before, .glow-border.active::before{ opacity:1; animation:pulse-glow 3s infinite; }
+    @keyframes pulse-glow{ 0%{ transform:scale(1); opacity:.25 } 50%{ transform:scale(1.02); opacity:.6 } 100%{ transform:scale(1); opacity:.25 } }
+
+    .glass-box{ background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border:1px solid rgba(255,255,255,0.03); backdrop-filter:blur(8px); border-radius:14px; padding:18px; }
+
+    /* Feature card animation */
+    .feature-card{ background:rgba(12,14,16,0.65); border-radius:12px; padding:16px; border:1px solid rgba(255,255,255,0.03); opacity:0; transform:translateY(18px); transition:all .48s cubic-bezier(.22,.9,.25,1); }
+    .feature-card.show{ opacity:1; transform:translateY(0); box-shadow:0 12px 30px rgba(0,0,0,.6); }
+
+    /* Subject chooser - smaller cards */
+    .subject-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:14px; }
+    .subject-card{ position:relative; border-radius:12px; padding:12px; background:rgba(3,5,8,0.62); border:1px solid rgba(255,255,255,0.04); transition:transform .28s cubic-bezier(.2,.9,.25,1), box-shadow .28s; display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer; min-height:150px; }
+    .subject-card:hover{ transform:translateY(-8px) rotate(-0.6deg) scale(1.02); box-shadow:0 18px 40px rgba(56,189,248,.08), inset 0 0 60px rgba(236,72,153,0.02); border-color:rgba(56,189,248,.12); }
+    .subject-title{ font-weight:700; font-size:1rem; }
+    .subject-sub{ color:var(--muted); font-size:.82rem; }
+
+    /* mini lottie smaller */
+    .mini-lottie{ width:92px; height:92px; pointer-events:none; }
+
+    /* icon gradient glow effect (applies to lucide icons) */
+    .icon-glow svg{ display:block; color:var(--neon1); filter:
+      drop-shadow(0 6px rgba(56,189,248,0.18))
+      drop-shadow(0 0 12px rgba(236,72,153,0.10)); transition:filter .28s, color .28s; }
+    .subject-card:hover .icon-glow svg{ color:var(--neon2); filter:
+      drop-shadow(0 10px rgba(56,189,248,0.18))
+      drop-shadow(0 0 18px rgba(236,72,153,0.35)); }
+
+    /* quiz/dash tweaks (slightly smaller) */
+    .glass-box.small { padding:14px; }
+    #scoreLineChart { max-height:220px !important; }
+    #attemptsList { max-height:140px; }
+
+    .animate-fadeIn{ animation:fadeIn .22s ease-out both; }
+    @keyframes fadeIn{ from{ opacity:0; transform:translateY(8px) } to{ opacity:1; transform:translateY(0) } }
+
+    @media (max-width:768px){
+      .nav-center{ display:none; }
+      .subject-grid{ grid-template-columns:1fr; }
+      .hero-grid{ grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Background video (local) -->
+  <video id="bgVideo" autoplay muted loop playsinline>
+    <source src="space.mp4" type="video/mp4">
+    <!-- fallback to canvas starfield below -->
+  </video>
+
+  <!-- Canvas starfield fallback -->
+  <canvas id="starfieldCanvas" aria-hidden="true"></canvas>
+  <div class="nebula-overlay" aria-hidden="true"></div>
+
+  <!-- Header -->
+  <header>
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="nav-left">
+        <img id="logoImg" src="IMG1.jpg" alt="Brainbuzz logo" class="h-10 rounded-md object-cover bg-gray-900" onerror="this.style.display='none'"/>
+        <button id="logoBtn" class="text-white"><h1 class="brand-font text-lg md:text-2xl font-extrabold">BRAINBUZZ</h1></button>
+      </div>
+
+      <div class="nav-center">
+        <div class="nav-box glow-border nav-ink" data-target="features" id="navFeaturesBtn">Features</div>
+        <div class="nav-box glow-border nav-ink" data-target="about" id="navAboutBtn">About</div>
+        <div class="nav-box glow-border nav-ink" data-target="contact" id="navContactBtn">Contact</div>
+      </div>
+
+      <div class="nav-right">
+        <button id="startBtnTop" class="px-4 py-2 rounded-full" style="background:linear-gradient(90deg,var(--neon1),var(--neon2)); color:#000; font-weight:700;">Start Quiz</button>
+        <button id="navLoginBtn" class="px-3 py-2 rounded-full glass-btn">Login</button>
+        <button id="navSignupBtn" class="px-3 py-2 rounded-full glass-btn">Sign Up</button>
+        <button id="logoutBtn" class="hidden px-3 py-2 rounded-full border border-red-600">Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main -->
+  <main class="min-h-screen relative z-10">
+    <div class="max-w-6xl mx-auto px-4 py-10">
+
+      <!-- Hero -->
+      <section id="homeSection" class="px-4 py-8 grid hero-grid grid-cols-2 gap-8 items-center">
+        <div class="md:w-1/2 z-20">
+          <h2 class="text-3xl md:text-4xl font-extrabold brand-font">Fuel Your Mind. Challenge Your Knowledge with <span class="text-gray-200">BRAINBUZZ.</span></h2>
+          <p class="text-gray-300 max-w-xl mt-3">Brainbuzz fetches adaptive trivia questions (online) and uses a reliable local fallback — quick, interactive, and built to help you improve daily.</p>
+          <div class="flex gap-4 mt-4">
+            <button id="startBtn" class="px-6 py-3 rounded-full" style="background:linear-gradient(90deg,var(--neon1),var(--neon2)); color:#000; font-weight:700;">Start Quiz</button>
+            <button id="learnMore" class="px-4 py-3 rounded-full border border-gray-700 text-gray-200">Explore Features</button>
+          </div>
+          <div class="text-sm text-gray-400 mt-3">Tip: If questions fail to load due to network issues, Brainbuzz falls back to a local set so you can keep playing.</div>
+        </div>
+        <div class="flex-1 flex justify-center md:justify-end z-20">
+          <lottie-player id="heroLottie" background="transparent" speed="1" style="width:360px;height:360px;" loop autoplay></lottie-player>
+        </div>
+      </section>
+
+      <!-- Features -->
+      <section id="features" class="hidden px-4 py-8">
+        <div class="glass-box glow-border animate-fadeIn">
+          <h3 class="text-2xl font-bold brand-font mb-6">Features</h3>
+          <div id="featureGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="feature-card glow-border p-4"><div class="flex items-center gap-3 mb-2"><i data-lucide="brain-circuit" class="w-6 h-6 icon"></i><h4 class="font-semibold">AI-Powered Quiz Generation</h4></div><p class="text-gray-300">Custom quizzes tailored to your strengths & weaknesses.</p></div>
+            <div class="feature-card glow-border p-4"><div class="flex items-center gap-3 mb-2"><i data-lucide="gamepad-2" class="w-6 h-6 icon"></i><h4 class="font-semibold">Gamified Experience</h4></div><p class="text-gray-300">Points, streaks, and badges to keep you motivated.</p></div>
+            <div class="feature-card glow-border p-4"><div class="flex items-center gap-3 mb-2"><i data-lucide="bar-chart-3" class="w-6 h-6 icon"></i><h4 class="font-semibold">Performance Dashboard</h4></div><p class="text-gray-300">Track progress with charts and historical scores.</p></div>
+            <div class="feature-card glow-border p-4"><div class="flex items-center gap-3 mb-2"><i data-lucide="moon" class="w-6 h-6 icon"></i><h4 class="font-semibold">Dark / B&W Theme</h4></div><p class="text-gray-300">Minimal UI designed for focus and clarity.</p></div>
+            <div class="feature-card glow-border p-4"><div class="flex items-center gap-3 mb-2"><i data-lucide="bot" class="w-6 h-6 icon"></i><h4 class="font-semibold">AI Explanations</h4></div><p class="text-gray-300">Short explanations after each question (future feature).</p></div>
+            <div class="feature-card glow-border p-4"><div class="flex items-center gap-3 mb-2"><i data-lucide="book-open-text" class="w-6 h-6 icon"></i><h4 class="font-semibold">Multi-Subject Support</h4></div><p class="text-gray-300">Science, Mathematics, General Knowledge, History (10 Qs each).</p></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- About -->
+      <section id="about" class="hidden px-4 py-8">
+        <div class="glass-box glow-border md:flex md:items-center md:gap-6 animate-fadeIn">
+          <div class="md:w-1/2">
+            <h3 class="text-2xl font-bold brand-font mb-2">About BRAINBUZZ</h3>
+            <p class="text-gray-300 mb-2">Brainbuzz is an interactive quiz platform designed to make learning fun and engaging. Play quizzes, track performance, and challenge yourself in real-time.</p>
+            <p class="text-gray-400">Our vision: make daily practice simple and rewarding.</p>
+          </div>
+          <div class="md:w-1/2 flex justify-center mt-6 md:mt-0">
+          <div class="lottie-wrap">
+              <lottie-player src="https://assets1.lottiefiles.com/packages/lf20_ydo1amjm.json" background="transparent" speed="1" style="width:300px;height:300px;" loop autoplay></lottie-player>  
+          </div>
+ 
+        </div>
+      </section>
+
+      <!-- Contact -->
+      <section id="contact" class="hidden px-4 py-8">
+        <div class="glass-box glow-border max-w-md mx-auto animate-fadeIn">
+          <h3 class="text-2xl font-bold brand-font mb-4">Contact</h3>
+          <form id="contactForm" class="space-y-3">
+            <div><label class="text-gray-300 block mb-1">Name</label><input id="contactName" class="w-full p-3 rounded bg-black border border-gray-700 text-white" required></div>
+            <div><label class="text-gray-300 block mb-1">Email</label><input id="contactEmail" type="email" class="w-full p-3 rounded bg-black border border-gray-700 text-white" required></div>
+            <div><label class="text-gray-300 block mb-1">Message</label><textarea id="contactMsg" rows="4" class="w-full p-3 rounded bg-black border border-gray-700 text-white"></textarea></div>
+            <div class="flex gap-2"><button type="submit" class="flex-1 px-4 py-2 rounded-full" style="background:linear-gradient(90deg,var(--neon1),var(--neon2)); color:#000;">Send</button><button type="button" id="contactCancel" class="px-4 py-2 rounded-full border border-gray-700">Cancel</button></div>
+          </form>
+        </div>
+      </section>
+
+      <!-- Subject chooser (smaller cards) -->
+      <section id="subjectChooser" class="hidden px-4 py-8">
+        <div class="glass-box glow-border animate-fadeIn">
+          <h3 class="text-2xl font-bold brand-font mb-4" style="background:linear-gradient(90deg,var(--neon1),var(--neon2)); -webkit-background-clip:text; color:transparent;">Choose Your Subject</h3>
+          <p class="text-gray-400 mb-4">Pick a subject to start a focused 10-question quiz.</p>
+
+          <div class="subject-grid">
+            <!-- Science -->
+            <div class="subject-card glow-border" data-subject="Science & Nature">
+              <div class="icon-glow"><i data-lucide="atom" class="w-7 h-7"></i></div>
+              <lottie-player class="mini-lottie" id="lottieScience" background="transparent" speed="1" loop autoplay></lottie-player>
+              <div class="subject-title">Science & Nature</div>
+              <div class="subject-sub">Physics, Chemistry & Biology</div>
+            </div>
+
+            <!-- Mathematics -->
+            <div class="subject-card glow-border" data-subject="Mathematics">
+              <div class="icon-glow"><i data-lucide="hash" class="w-7 h-7"></i></div>
+              <lottie-player class="mini-lottie" id="lottieMath" background="transparent" speed="1" loop autoplay></lottie-player>
+              <div class="subject-title">Mathematics</div>
+              <div class="subject-sub">Algebra, Geometry, Arithmetic</div>
+            </div>
+
+            <!-- General Knowledge -->
+            <div class="subject-card glow-border" data-subject="General Knowledge">
+              <div class="icon-glow"><i data-lucide="brain" class="w-7 h-7"></i></div>
+              <lottie-player class="mini-lottie" id="lottieGK" background="transparent" speed="1" loop autoplay></lottie-player>
+              <div class="subject-title">General Knowledge</div>
+              <div class="subject-sub">Trivia, Facts & Culture</div>
+            </div>
+
+            <!-- History -->
+            <div class="subject-card glow-border" data-subject="History">
+              <div class="icon-glow"><i data-lucide="book-open" class="w-7 h-7"></i></div>
+              <lottie-player class="mini-lottie" id="lottieHistory" background="transparent" speed="1" loop autoplay></lottie-player>
+              <div class="subject-title">History</div>
+              <div class="subject-sub">World & Civilizations</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Login -->
+      <section id="loginPage" class="hidden px-4 py-8">
+        <div class="max-w-md mx-auto glass-box animate-fadeIn">
+          <h3 class="text-xl font-bold mb-4 brand-font">Login</h3>
+          <form id="loginForm" class="space-y-4">
+            <div><label class="text-sm text-gray-300">Username</label><input id="username" class="w-full mt-1 p-3 rounded bg-black border border-gray-700 text-white" required></div>
+            <div><label class="text-sm text-gray-300">Password</label><input id="password" type="password" class="w-full mt-1 p-3 rounded bg-black border border-gray-700 text-white" required></div>
+            <div id="loginError" class="text-sm text-red-400 hidden"></div>
+            <div class="flex justify-between"><button type="submit" class="px-4 py-2 rounded-full" style="background:linear-gradient(90deg,var(--neon1),var(--neon2)); color:#000;">Login</button><button type="button" id="goToSignup" class="px-4 py-2 rounded-full border border-gray-700">Sign Up</button></div>
+          </form>
+        </div>
+      </section>
+
+      <!-- Signup -->
+      <section id="signupPage" class="hidden px-4 py-8">
+        <div class="max-w-md mx-auto glass-box animate-fadeIn">
+          <h3 class="text-xl font-bold mb-4 brand-font">Sign Up</h3>
+          <form id="signupForm" class="space-y-4">
+            <div><label class="text-sm text-gray-300">Username</label><input id="signupUsername" class="w-full mt-1 p-3 rounded bg-black border border-gray-700 text-white" required></div>
+            <div><label class="text-sm text-gray-300">Password</label><input id="signupPassword" type="password" class="w-full mt-1 p-3 rounded bg-black border border-gray-700 text-white" required></div>
+            <div><label class="text-sm text-gray-300">Confirm Password</label><input id="signupConfirmPassword" type="password" class="w-full mt-1 p-3 rounded bg-black border border-gray-700 text-white" required></div>
+            <div id="signupError" class="text-sm text-red-400 hidden"></div>
+            <div class="flex justify-between"><button type="submit" class="px-4 py-2 rounded-full" style="background:linear-gradient(90deg,var(--neon1),var(--neon2)); color:#000;">Sign Up</button><button type="button" id="backToLogin" class="px-4 py-2 rounded-full border border-gray-700">Back</button></div>
+          </form>
+        </div>
+      </section>
+
+      <!-- Quiz -->
+      <section id="quizPage" class="hidden px-4 py-8">
+        <div class="glass-box max-w-2xl mx-auto animate-fadeIn">
+          <div class="flex items-center justify-between mb-2">
+            <div class="text-sm text-gray-300">Q <span id="qIndex">1</span> / <span id="qTotal">10</span></div>
+            <div class="text-sm text-gray-300">⏳ <span id="timer">30</span>s</div>
+          </div>
+          <div class="w-full mb-3 bg-gray-800 rounded-full overflow-hidden"><div id="timerBar" class="timer-bar" style="width:100%"></div></div>
+          <div id="qCard" class="qcard mb-3"><h3 id="questionText" class="font-semibold text-white">Question text</h3></div>
+          <div id="optionsContainer" class="space-y-2 mb-3"></div>
+          <div class="flex items-center justify-between">
+            <div id="resultText" class="text-gray-300">✅ 0 Correct | ❌ 0 Incorrect</div>
+            <div>
+              <button id="skipBtn" class="px-3 py-1 rounded border border-gray-700">Skip</button>
+              <button id="nextBtn" class="ml-2 px-3 py-1 rounded hidden" style="background:linear-gradient(90deg,var(--neon1),var(--neon2)); color:#000;">Next</button>
+            </div>
+          </div>
+          <div id="explainBox" class="mt-3 p-3 bg-gray-800 rounded hidden"><div id="explainText" class="text-sm text-gray-300"></div></div>
+        </div>
+      </section>
+
+      <!-- Dashboard (smaller) -->
+      <section id="dashboard" class="hidden px-4 py-8">
+        <div class="glass-box small max-w-4xl mx-auto animate-fadeIn">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-2xl font-bold brand-font">Your Progress Dashboard</h3>
+            <button id="takeAgain" class="px-4 py-2 rounded-full" style="background:linear-gradient(90deg,var(--neon1),var(--neon2)); color:#000;">Take Another Quiz</button>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div class="p-3 bg-gray-800 rounded glow-border">
+              <div class="text-sm text-gray-400">Latest Score</div>
+              <div id="latestScore" class="text-2xl font-bold mt-2">0%</div>
+            </div>
+            <div class="p-3 bg-gray-800 rounded glow-border">
+              <div class="text-sm text-gray-400">Average Accuracy</div>
+              <div id="avgScore" class="text-2xl font-bold mt-2">0%</div>
+            </div>
+            <div class="p-3 bg-gray-800 rounded glow-border">
+              <div class="text-sm text-gray-400">Quizzes Played</div>
+              <div id="quizzesPlayed" class="text-2xl font-bold mt-2">0</div>
+            </div>
+          </div>
+
+          <div class="p-3 bg-gray-900 rounded mb-4">
+            <canvas id="scoreLineChart" height="120"></canvas>
+          </div>
+
+          <div class="p-3 bg-gray-900 rounded">
+            <h4 class="text-sm text-gray-300 mb-3">Previous Attempts</h4>
+            <div id="attemptsList" class="max-h-40 overflow-auto space-y-2"></div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <footer class="py-6 text-center text-gray-400 border-t border-gray-800">© 2025 Brainbuzz Media Ltd.</footer>
+
+  <!-- Privacy modal -->
+  <div id="privacyModal" class="fixed inset-0 bg-black bg-opacity-80 hidden items-center justify-center z-50">
+    <div class="bg-gray-900 p-6 rounded-xl animate-fadeIn max-w-xl">
+      <h3 class="text-xl font-bold text-red-400 brand-font mb-2">Privacy Policy</h3>
+      <p class="text-gray-300">Brainbuzz stores quiz performance and login state locally in your browser's localStorage. No external sharing by default.</p>
+      <div class="text-right mt-4"><button onclick="closePrivacyPolicy()" class="px-4 py-2 rounded bg-red-600">Close</button></div>
+    </div>
+  </div>
+
+  <!-- Script -->
+  <script>
+    // Starfield canvas fallback
+    const canvas = document.getElementById('starfieldCanvas'); const ctx = canvas.getContext('2d');
+    let w = canvas.width = innerWidth, h = canvas.height = innerHeight; window.addEventListener('resize', ()=>{ w=canvas.width=innerWidth; h=canvas.height=innerHeight; initStars(); });
+    let stars = [];
+    function initStars(){ stars=[]; const count = Math.round((w*h)/42000)+80; for(let i=0;i<count;i++){ stars.push({ x:Math.random()*w, y:Math.random()*h, z:Math.random()*0.9+.1, r:Math.random()*1.4+.2, vx:(Math.random()-0.5)*0.02, vy:(Math.random()-0.5)*0.02 }); } }
+    function drawStars(){ ctx.clearRect(0,0,w,h); const g = ctx.createRadialGradient(w*0.15,h*0.15,0,w*0.6,h*0.6,Math.max(w,h)); g.addColorStop(0,'rgba(56,189,248,0.02)'); g.addColorStop(1,'rgba(236,72,153,0.00)'); ctx.fillStyle = g; ctx.fillRect(0,0,w,h); for(const s of stars){ s.x+=s.vx; s.y+=s.vy; if(s.x<0) s.x=w; if(s.x>w) s.x=0; if(s.y<0) s.y=h; if(s.y>h) s.y=0; const alpha = 0.5 + (0.5*Math.random()); ctx.beginPath(); ctx.fillStyle = `rgba(255,255,255,${alpha*s.z})`; ctx.arc(s.x,s.y,s.r*s.z,0,Math.PI*2); ctx.fill(); } requestAnimationFrame(drawStars); }
+    initStars(); requestAnimationFrame(drawStars);
+
+    document.addEventListener('DOMContentLoaded', ()=> {
+      lucide.createIcons();
+
+      // Subject-specific Lottie URLs (distinct)
+      const subjectLottieURLs = {
+        'Science & Nature': 'https://assets10.lottiefiles.com/packages/lf20_ygiuluqn.json', // atom
+        'Mathematics': 'https://assets10.lottiefiles.com/packages/lf20_h8chft33.json', // numbers
+        'General Knowledge': 'https://assets1.lottiefiles.com/packages/lf20_jcikwtux.json', // brain
+        'History': 'https://assets10.lottiefiles.com/packages/lf20_7wwm6h4p.json' // book
+      };
+
+      // Other Lotties
+      const heroLottieUrl = 'https://assets9.lottiefiles.com/packages/lf20_x1yjv7xi.json';
+      const aboutLottieUrl = 'https://assets1.lottiefiles.com/packages/lf20_ydo1amjm.json';
+
+      // Preload Lotties and set src
+      async function preloadAndSet(id, url){
+        try{
+          const res = await fetch(url);
+          const txt = await res.text();
+          const blobUrl = URL.createObjectURL(new Blob([txt], { type:'application/json'}));
+          document.getElementById(id).setAttribute('src', blobUrl);
+        } catch(e){ console.warn('Lottie preload failed for', id, url, e); document.getElementById(id).setAttribute('src', url); }
+      }
+
+      // preload hero + about
+      preloadAndSet('heroLottie', heroLottieUrl);
+      preloadAndSet('aboutLottie', aboutLottieUrl);
+      // preload subject mini lotties
+      preloadAndSet('lottieScience', subjectLottieURLs['Science & Nature']);
+      preloadAndSet('lottieMath', subjectLottieURLs['Mathematics']);
+      preloadAndSet('lottieGK', subjectLottieURLs['General Knowledge']);
+      preloadAndSet('lottieHistory', subjectLottieURLs['History']);
+
+      // Pages list
+      const pages = ['homeSection','features','about','contact','subjectChooser','loginPage','signupPage','quizPage','dashboard'];
+      function hideAllPages(){ pages.forEach(id => { const el = document.getElementById(id); if(el) el.classList.add('hidden'); }); }
+      function routeTo(id){
+        hideAllPages();
+        const el = document.getElementById(id); if(el) el.classList.remove('hidden');
+        document.querySelectorAll('.nav-box').forEach(b=>b.classList.remove('active'));
+        const nb = document.querySelector(`.nav-box[data-target="${id}"]`); if(nb) nb.classList.add('active');
+        if(id==='features'){ document.querySelectorAll('.feature-card').forEach((c,i)=> setTimeout(()=> c.classList.add('show'), i*110)); }
+        window.scrollTo({ top:0, behavior:'smooth' });
+      }
+
+      // Header wiring
+      document.getElementById('logoBtn').addEventListener('click', ()=> routeTo('homeSection'));
+      document.getElementById('navFeaturesBtn').addEventListener('click', ()=> routeTo('features'));
+      document.getElementById('navAboutBtn').addEventListener('click', ()=> routeTo('about'));
+      document.getElementById('navContactBtn').addEventListener('click', ()=> routeTo('contact'));
+      document.getElementById('learnMore').addEventListener('click', ()=> routeTo('features'));
+
+      // Start button -> subject chooser or login
+      function goToSubjectChooserOrLogin(){
+        if(isLoggedIn()) routeTo('subjectChooser'); else routeTo('loginPage');
+      }
+      document.getElementById('startBtnTop').addEventListener('click', goToSubjectChooserOrLogin);
+      document.getElementById('startBtn').addEventListener('click', goToSubjectChooserOrLogin);
+
+      // Subject chooser click
+      document.querySelectorAll('.subject-card').forEach(card=>{
+        card.addEventListener('click', ()=> {
+          const subject = card.getAttribute('data-subject');
+          localStorage.setItem('bb_selectedSubject', subject);
+          // small feedback then start
+          card.classList.add('selected');
+          setTimeout(()=> startQuiz(subject), 200);
+        });
+      });
+
+      // Contact
+      document.getElementById('contactForm').addEventListener('submit', (e)=>{ e.preventDefault(); alert('Message received (demo)'); e.target.reset(); routeTo('homeSection'); });
+      document.getElementById('contactCancel').addEventListener('click', ()=> routeTo('homeSection'));
+
+      // Privacy modal
+      window.openPrivacyPolicy = ()=> { document.getElementById('privacyModal').classList.remove('hidden'); document.getElementById('privacyModal').classList.add('flex'); };
+      window.closePrivacyPolicy = ()=> { document.getElementById('privacyModal').classList.add('hidden'); document.getElementById('privacyModal').classList.remove('flex'); };
+
+      // localStorage keys / helpers
+      const LS = { userPrefix:'bb_user_', loggedIn:'bb_loggedIn', username:'bb_username', attempts:'bb_attempts', quizzesPlayed:'bb_quizzesPlayed', totalScore:'bb_totalScore', currentStreak:'bb_currentStreak' };
+      function isLoggedIn(){ return localStorage.getItem(LS.loggedIn) === 'true'; }
+      function getUsername(){ return localStorage.getItem(LS.username) || 'guest'; }
+      function initStorage(){ if(localStorage.getItem(LS.attempts)===null) localStorage.setItem(LS.attempts, JSON.stringify([])); if(localStorage.getItem(LS.quizzesPlayed)===null) localStorage.setItem(LS.quizzesPlayed,'0'); if(localStorage.getItem(LS.totalScore)===null) localStorage.setItem(LS.totalScore,'0'); if(localStorage.getItem(LS.currentStreak)===null) localStorage.setItem(LS.currentStreak,'0'); }
+      function getAttempts(){ return JSON.parse(localStorage.getItem(LS.attempts) || '[]'); }
+      function saveAttempt(a){ const arr=getAttempts(); arr.push(a); localStorage.setItem(LS.attempts, JSON.stringify(arr)); }
+      function getQuizzesPlayed(){ return Number(localStorage.getItem(LS.quizzesPlayed)||0); } function setQuizzesPlayed(n){ localStorage.setItem(LS.quizzesPlayed,String(n)); }
+      function getTotalScore(){ return Number(localStorage.getItem(LS.totalScore)||0); } function setTotalScore(n){ localStorage.setItem(LS.totalScore,String(n)); }
+      function getCurrentStreak(){ return Number(localStorage.getItem(LS.currentStreak)||0); } function setCurrentStreak(n){ localStorage.setItem(LS.currentStreak,String(n)); }
+
+      function syncHeader(){ const loginBtn=document.getElementById('navLoginBtn'), signupBtn=document.getElementById('navSignupBtn'), logoutBtn=document.getElementById('logoutBtn'); if(isLoggedIn()){ loginBtn.classList.add('hidden'); signupBtn.classList.add('hidden'); logoutBtn.classList.remove('hidden'); } else { loginBtn.classList.remove('hidden'); signupBtn.classList.remove('hidden'); logoutBtn.classList.add('hidden'); } }
+
+      // login/signup wiring
+      document.getElementById('goToSignup').addEventListener('click', ()=> routeTo('signupPage'));
+      document.getElementById('backToLogin').addEventListener('click', ()=> routeTo('loginPage'));
+      document.getElementById('logoutBtn').addEventListener('click', ()=> { localStorage.setItem(LS.loggedIn,'false'); localStorage.removeItem(LS.username); syncHeader(); routeTo('homeSection'); });
+
+      const loginForm = document.getElementById('loginForm'), loginError = document.getElementById('loginError');
+      loginForm.addEventListener('submit', (e)=> { e.preventDefault(); const u=document.getElementById('username').value.trim(); const p=document.getElementById('password').value; if(!u||!p){ loginError.innerText='Enter username & password'; loginError.classList.remove('hidden'); return; } const stored = localStorage.getItem(LS.userPrefix + u); if(stored && stored === p){ localStorage.setItem(LS.loggedIn,'true'); localStorage.setItem(LS.username,u); loginError.classList.add('hidden'); syncHeader(); routeTo('subjectChooser'); } else { loginError.innerText='Invalid credentials'; loginError.classList.remove('hidden'); } });
+
+      const signupForm = document.getElementById('signupForm'), signupError = document.getElementById('signupError');
+      signupForm.addEventListener('submit', (e)=> { e.preventDefault(); const u=document.getElementById('signupUsername').value.trim(); const p=document.getElementById('signupPassword').value; const cp=document.getElementById('signupConfirmPassword').value; if(!u||!p||!cp){ signupError.innerText='All fields required'; signupError.classList.remove('hidden'); return; } if(p!==cp){ signupError.innerText='Passwords do not match'; signupError.classList.remove('hidden'); return; } if(localStorage.getItem(LS.userPrefix + u)){ signupError.innerText='Username exists'; signupError.classList.remove('hidden'); return; } localStorage.setItem(LS.userPrefix + u, p); alert('Signup successful — please login.'); signupForm.reset(); signupError.classList.add('hidden'); routeTo('loginPage'); });
+
+      initStorage(); syncHeader(); routeTo('homeSection');
+
+      // ---------- Quiz engine ----------
+      const categoryMap = { "General Knowledge":9, "Science & Nature":17, "Mathematics":19, "History":23 };
+      const fallbackQuestions = [
+        {question:"What is H2O commonly called?", options:["Hydrogen","Oxygen","Water","Salt"], correct:"Water", subject:"Science & Nature"},
+        {question:"2 + 3 × 4 = ?", options:["20","14","12","11"], correct:"14", subject:"Mathematics"},
+        {question:"Who wrote 'Hamlet'?", options:["Shakespeare","Tolstoy","Homer","Dante"], correct:"Shakespeare", subject:"General Knowledge"},
+        {question:"The Great Wall is in which country?", options:["China","India","Japan","Korea"], correct:"China", subject:"History"},
+        {question:"What planet is known as the Red Planet?", options:["Earth","Mars","Venus","Mercury"], correct:"Mars", subject:"Science & Nature"},
+        {question:"What is 9 × 9?", options:["72","81","99","90"], correct:"81", subject:"Mathematics"},
+        {question:"Who painted Mona Lisa?", options:["Da Vinci","Van Gogh","Picasso","Michelangelo"], correct:"Da Vinci", subject:"General Knowledge"},
+        {question:"WWII ended in which year?", options:["1945","1939","1950","1920"], correct:"1945", subject:"History"},
+        {question:"Gas humans breathe in to live?", options:["Oxygen","Hydrogen","Nitrogen","CO2"], correct:"Oxygen", subject:"Science & Nature"},
+        {question:"What is 7 × 6?", options:["42","36","48","52"], correct:"42", subject:"Mathematics"}
+      ];
+
+      // Quiz DOM refs
+      const qText = document.getElementById('questionText'), optionsContainer = document.getElementById('optionsContainer'), timerEl = document.getElementById('timer'), timerBar = document.getElementById('timerBar'), resultText = document.getElementById('resultText'), nextBtn = document.getElementById('nextBtn'), skipBtn = document.getElementById('skipBtn'), explainBox = document.getElementById('explainBox'), explainText = document.getElementById('explainText'), qIndex = document.getElementById('qIndex'), qTotal = document.getElementById('qTotal');
+
+      let currentQuiz=[], currentQuestion=0, score=0, incorrect=0, timer=null, timeLeft=30, subjectForQuiz='General Knowledge';
+
+      function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+      function decodeHTML(html){ const t=document.createElement('textarea'); t.innerHTML=html; return t.value; }
+
+      window.startQuiz = function(subject){
+        subjectForQuiz = subject; routeTo('quizPage'); generateQuestions(subject);
+      };
+
+      async function generateQuestions(subject){
+        const cat = categoryMap[subject]||9;
+        try {
+          const res = await fetch(`https://opentdb.com/api.php?amount=10&category=${cat}&type=multiple`);
+          const data = await res.json();
+          if(!data || data.response_code !== 0 || !Array.isArray(data.results) || data.results.length===0) throw new Error('no remote');
+          currentQuiz = data.results.map(q=>{ const incs = q.incorrect_answers.map(a=> decodeHTML(a)); const correct = decodeHTML(q.correct_answer); return { question: decodeHTML(q.question), options: shuffle([...incs,correct]), correct, subject }; });
+        } catch(err){
+          const pool = fallbackQuestions.filter(x=> x.subject===subject).length ? fallbackQuestions.filter(x=> x.subject===subject) : fallbackQuestions;
+          currentQuiz = [];
+          for(let i=0;i<10;i++){ const q = pool[i % pool.length]; currentQuiz.push({ question:q.question, options:shuffle([...q.options]), correct:q.correct, subject }); }
+        }
+        currentQuestion=0; score=0; incorrect=0; qTotal.innerText = currentQuiz.length; qIndex.innerText = 1; loadQuestion();
+      }
+
+      function loadQuestion(){
+        clearInterval(timer); timeLeft=30; timerEl.innerText=timeLeft; timerBar.style.width='100%'; explainBox.classList.add('hidden');
+        const q=currentQuiz[currentQuestion]; if(!q){ showResults(); return; }
+        qText.innerText=q.question; optionsContainer.innerHTML='';
+        q.options.forEach(opt=>{ const d=document.createElement('div'); d.className='p-3 rounded bg-gray-800 cursor-pointer'; d.innerText=opt; d.addEventListener('click', ()=> selectOption(d,opt)); optionsContainer.appendChild(d); });
+        resultText.innerText = `✅ ${score} Correct | ❌ ${incorrect} Incorrect`; nextBtn.classList.add('hidden'); skipBtn.disabled=false;
+        timer = setInterval(()=>{ timeLeft--; timerEl.innerText=Math.max(timeLeft,0); timerBar.style.width=(timeLeft/30*100)+'%'; if(timeLeft<=0){ clearInterval(timer); Array.from(optionsContainer.children).forEach(d=> d.style.pointerEvents='none'); incorrect++; setCurrentStreak(0); resultText.innerText = `✅ ${score} Correct | ❌ ${incorrect} Incorrect`; const corr = currentQuiz[currentQuestion].correct; Array.from(optionsContainer.children).forEach(d=> { if(d.innerText===corr) d.classList.add('ring-2','ring-green-400'); }); explainText.innerText = `Time's up — correct: ${corr}`; explainBox.classList.remove('hidden'); nextBtn.classList.remove('hidden'); skipBtn.disabled=true; } },1000);
+      }
+
+      function selectOption(div, selected){
+        clearInterval(timer); Array.from(optionsContainer.children).forEach(d=> d.style.pointerEvents='none'); const corr = currentQuiz[currentQuestion].correct;
+        if(selected === corr){ div.classList.add('bg-green-600'); score++; setCurrentStreak(getCurrentStreak()+1); explainText.innerText='Correct — well done!'; }
+        else { div.classList.add('bg-red-600'); incorrect++; setCurrentStreak(0); explainText.innerText=`Incorrect — correct: ${corr}`; Array.from(optionsContainer.children).forEach(d=> { if(d.innerText===corr) d.classList.add('ring-2','ring-green-400'); }); }
+        explainBox.classList.remove('hidden'); resultText.innerText = `✅ ${score} Correct | ❌ ${incorrect} Incorrect`; nextBtn.classList.remove('hidden'); skipBtn.disabled=true;
+      }
+
+      skipBtn.addEventListener('click', ()=>{ clearInterval(timer); Array.from(optionsContainer.children).forEach(d=> d.style.pointerEvents='none'); incorrect++; setCurrentStreak(0); const corr = currentQuiz[currentQuestion].correct; Array.from(optionsContainer.children).forEach(d=> { if(d.innerText===corr) d.classList.add('ring-2','ring-green-400'); }); explainText.innerText = `Skipped — correct: ${corr}`; explainBox.classList.remove('hidden'); nextBtn.classList.remove('hidden'); skipBtn.disabled=true; });
+
+      nextBtn.addEventListener('click', ()=>{ currentQuestion++; if(currentQuestion < currentQuiz.length){ qIndex.innerText = currentQuestion + 1; loadQuestion(); } else showResults(); });
+
+      function showResults(){
+        clearInterval(timer); const pct = Math.round((score/currentQuiz.length)*100);
+        const attempt = { username:getUsername(), subject:subjectForQuiz, scorePct:pct, correct:score, total:currentQuiz.length, timestamp:new Date().toISOString() };
+        saveAttempt(attempt); setQuizzesPlayed(getQuizzesPlayed()+1); setTotalScore(getTotalScore()+pct); renderDashboard(); routeTo('dashboard');
+      }
+
+      // Dashboard rendering
+      let scoreLineChart = null;
+      function renderDashboard(){
+        const attempts = getAttempts();
+        document.getElementById('latestScore').innerText = attempts.length ? attempts[attempts.length-1].scorePct + '%' : '0%';
+        const avg = getQuizzesPlayed() === 0 ? 0 : (getTotalScore() / getQuizzesPlayed());
+        document.getElementById('avgScore').innerText = avg.toFixed(1) + '%';
+        document.getElementById('quizzesPlayed').innerText = getQuizzesPlayed();
+
+        // attempts list
+        const list = document.getElementById('attemptsList'); list.innerHTML = '';
+        if(attempts.length === 0) list.innerHTML = '<div class="text-gray-400 text-sm">No attempts yet.</div>';
+        attempts.slice().reverse().forEach(a => {
+          const div = document.createElement('div'); div.className = 'p-2 bg-gray-800 rounded flex justify-between';
+          const dt = new Date(a.timestamp);
+          div.innerHTML = `<div><div class="font-medium">${a.subject}</div><div class="text-gray-400 text-xs">${a.username} • ${dt.toLocaleString()}</div></div><div class="font-semibold">${a.scorePct}%</div>`;
+          list.appendChild(div);
+        });
+
+        // line chart
+        const labels = attempts.map((_,i)=>`#${i+1}`);
+        const data = attempts.map(a => a.scorePct);
+        if(scoreLineChart) scoreLineChart.destroy();
+        const ctx = document.getElementById('scoreLineChart').getContext('2d');
+        scoreLineChart = new Chart(ctx, {
+          type: 'line',
+          data: { labels, datasets: [{ label:'Score %', data, fill:true, backgroundColor:'rgba(56,189,248,0.08)', borderColor:'rgba(56,189,248,1)', tension:0.35 }] },
+          options: { responsive:true, scales:{ y:{ beginAtZero:true, max:100, ticks:{ color:'#9ca3af' } }, x:{ ticks:{ color:'#9ca3af' } } }, plugins:{ legend:{ display:false } } }
+        });
+      }
+
+      document.getElementById('takeAgain').addEventListener('click', ()=> routeTo('subjectChooser'));
+
+      // initial render
+      renderDashboard();
+    }); // DOMContentLoaded end
+
+    // privacy modal helpers
+    function openPrivacyPolicy(){ document.getElementById('privacyModal').classList.remove('hidden'); document.getElementById('privacyModal').classList.add('flex'); }
+    function closePrivacyPolicy(){ document.getElementById('privacyModal').classList.add('hidden'); document.getElementById('privacyModal').classList.remove('flex'); }
+  </script>
+</body>
+</html>
